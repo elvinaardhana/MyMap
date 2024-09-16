@@ -24,6 +24,7 @@ export class HomePage implements OnInit {
     this.longitude = position.coords.longitude;
 
     // Create the map
+    //
     const map = new Map({
       basemap: 'topo-vector'
     });
