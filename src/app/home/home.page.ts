@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import Map from '@arcgis/core/Map';
 import MapView from '@arcgis/core/views/MapView';
 import Graphic from '@arcgis/core/Graphic';
-import Point from '@arcgis/core/geometry/Point'; // Import Point geometry
-import { Geolocation } from '@capacitor/geolocation';
+import Point from '@arcgis/core/geometry/Point';
+import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol';
+import ImageLayer from '@arcgis/core/layers/ImageryLayer';
 
 @Component({
   selector: 'app-home',
@@ -12,56 +13,90 @@ import { Geolocation } from '@capacitor/geolocation';
 })
 
 export class HomePage implements OnInit {
-  latitude!: number;
-  longitude!: number;
+  mapView!: MapView;
+  userLocationGraphics: Graphic | any;
+  map!: Map;
 
+   // Tetapkan koordinat secara manual
+   latitude = 40.6974881; // Ganti dengan latitude yang diinginkan
+   longitude = -73.979681; // Ganti dengan longitude yang diinginkan
+   
   constructor() { }
 
-  public async ngOnInit() {
-    // Get the user's current position
-    const position = await Geolocation.getCurrentPosition();
-    this.latitude = position.coords.latitude;
-    this.longitude = position.coords.longitude;
-
-    // Create the map
-    //
-    const map = new Map({
-      basemap: 'topo-vector'
+  async ngOnInit() {
+    this.map = new Map({
+      basemap: "topo-vector" // Default basemap
     });
 
-    // Create the map view
-    const view = new MapView({
-      container: 'container',  // Reference to the DOM element
-      map: map,
-      zoom: 12,
-      center: [this.longitude, this.latitude]
+    this.mapView = new MapView({
+      container: "container",
+      map: this.map,
+      zoom: 8
     });
 
-    // Create a Point geometry for the user's location
-    const point = new Point({
-      longitude: this.longitude,
-      latitude: this.latitude
-    });
+    let weatherServiceFL = new ImageLayer({ url: WeatherServiceUrl });
+    this.map.add(weatherServiceFL);
 
-    // Create a marker symbol
-    const markerSymbol = {
-      type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
-      color: 'blue',         // Marker color
-      outline: {
-        color: 'white',
-        width: 1
-      }
-    };
+    // Perbarui lokasi pengguna berdasarkan koordinat manual
+    await this.updateUserLocationOnMap();
+    this.mapView.center = this.userLocationGraphics.geometry as Point;
+    setInterval(this.updateUserLocationOnMap.bind(this), 10000);
+  }
 
-    // Create a graphic for the point and symbol
-    const pointGraphic = new Graphic({
-      geometry: point,  // Pass the Point object here
-      symbol: markerSymbol
-    });
+  // // current location
+  //     await this.updateUserLocationOnMap();
+  //     this.mapView.center = this.userLocationGraphics.geometry as Point;
+  //     setInterval(this.updateUserLocationOnMap.bind(this), 10000);
+  //   }
 
-    // Wait for the view to load, then add the marker
-    view.when(() => {
-      view.graphics.add(pointGraphic); // Add the marker to the view
+  async getLocationService(): Promise<number[]> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition((resp) => {
+        resolve([resp.coords.latitude, resp.coords.longitude]);
+      });
     });
   }
+
+// update current location
+  // async updateUserLocationOnMap() {
+  //   let latLng = await this.getLocationService();
+  //   let geom = new Point({ latitude: latLng[0], longitude: latLng[1] });
+  //   if (this.userLocationGraphics) {
+  //     this.userLocationGraphics.geometry = geom;
+  //   } else {
+  //     this.userLocationGraphics = new Graphic({
+  //       symbol: new SimpleMarkerSymbol(),
+  //       geometry: geom,
+  //     });
+  //     this.mapView.graphics.add(this.userLocationGraphics);
+  //   }
+  // }
+
+  // Fungsi untuk memperbarui titik lokasi berdasarkan koordinat manual
+  async updateUserLocationOnMap() {
+    let geom = new Point({ latitude: this.latitude, longitude: this.longitude });
+    
+    if (this.userLocationGraphics) {
+      this.userLocationGraphics.geometry = geom;
+    } else {
+      this.userLocationGraphics = new Graphic({
+        symbol: new SimpleMarkerSymbol({
+          color: [226, 119, 40],
+          outline: {
+            color: [255, 255, 255],
+            width: 2
+          }
+        }),
+        geometry: geom,
+      });
+      this.mapView.graphics.add(this.userLocationGraphics);
+    }
+  }
+
+  onBasemapChange(event: any) {
+    const selectedBasemap = event.detail.value;
+    this.map.basemap = selectedBasemap;
+  }
 }
+
+const WeatherServiceUrl = 'https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer';

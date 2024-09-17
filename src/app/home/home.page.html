@@ -1,17 +1,15 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Elvina's Map
-    </ion-title>
+    <ion-title>Elvina's Map</ion-title>
+    <ion-select (ionChange)="onBasemapChange($event)" placeholder="Basemap" interface="popover">
+      <ion-select-option value="topo-vector">Topographic</ion-select-option>
+      <ion-select-option value="streets-vector">Streets</ion-select-option>
+      <ion-select-option value="satellite">Satellite</ion-select-option>
+      <ion-select-option value="hybrid">Hybrid</ion-select-option>
+    </ion-select>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Elvina's Map</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <div id="container"> </div>
+  <div id="container" style="height: 100%; width: 100%;"></div>
 </ion-content>
