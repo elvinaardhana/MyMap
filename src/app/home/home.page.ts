@@ -17,10 +17,17 @@ export class HomePage implements OnInit {
   userLocationGraphics: Graphic | any;
   map!: Map;
 
-   // Tetapkan koordinat secara manual
-   latitude = 40.6974881; // Ganti dengan latitude yang diinginkan
-   longitude = -73.979681; // Ganti dengan longitude yang diinginkan
+   // titik zoom
+   latitude =  49.259880; 
+   longitude = -96.754435; 
    
+   // Array berisi beberapa koordinat
+   coordinates: { latitude: number, longitude: number }[] = [
+     { latitude: 47.812134,  longitude:-95.990843 }, // Lokasi pertama
+     { latitude: 46.727213, longitude: -94.439496 }, // Lokasi kedua
+     { latitude: 49.259880,  longitude: -96.754435 }, // Lokasi ketiga
+   ];
+
   constructor() { }
 
   async ngOnInit() {
@@ -31,7 +38,7 @@ export class HomePage implements OnInit {
     this.mapView = new MapView({
       container: "container",
       map: this.map,
-      zoom: 8
+      zoom: 5
     });
 
     let weatherServiceFL = new ImageLayer({ url: WeatherServiceUrl });
@@ -40,6 +47,10 @@ export class HomePage implements OnInit {
     // Perbarui lokasi pengguna berdasarkan koordinat manual
     await this.updateUserLocationOnMap();
     this.mapView.center = this.userLocationGraphics.geometry as Point;
+    
+    // Tambahkan beberapa titik ke peta
+    this.addMultiplePointsToMap();
+
     setInterval(this.updateUserLocationOnMap.bind(this), 10000);
   }
 
@@ -57,7 +68,7 @@ export class HomePage implements OnInit {
     });
   }
 
-// update current location
+  // update current location
   // async updateUserLocationOnMap() {
   //   let latLng = await this.getLocationService();
   //   let geom = new Point({ latitude: latLng[0], longitude: latLng[1] });
@@ -91,6 +102,30 @@ export class HomePage implements OnInit {
       });
       this.mapView.graphics.add(this.userLocationGraphics);
     }
+  }
+
+  // Fungsi untuk menambahkan beberapa titik ke peta
+  addMultiplePointsToMap() {
+    this.coordinates.forEach((coord) => {
+      let point = new Point({
+        latitude: coord.latitude,
+        longitude: coord.longitude
+      });
+
+      let pointGraphic = new Graphic({
+        symbol: new SimpleMarkerSymbol({
+          color: [226, 119, 40],
+          outline: {
+            color: [255, 255, 255],
+            width: 2
+          }
+        }),
+        geometry: point
+      });
+
+      // Tambahkan titik ke peta
+      this.mapView.graphics.add(pointGraphic);
+    });
   }
 
   onBasemapChange(event: any) {
